@@ -1,5 +1,5 @@
 import Hotel from "../db/models/hotel";
-import { CreateHotelDto } from "../dtos/hotel.dto";
+import { CreateHotelDto, UpdateHotelDto } from "../dtos/hotel.dto";
 import logger from "../config/logger.config";
 import { NotFoundError } from "../utils/api-error";
 
@@ -23,4 +23,27 @@ export async function getHotelById(id: number) {
   }
   logger.info(`Hotel found with id: ${id}`);
   return hotel;
+}
+
+export async function getHotels() {
+  const hotels = await Hotel.findAll();
+  return hotels;
+}
+
+export async function updateHotel(id: number, hotel: UpdateHotelDto) {
+  const updatedHotel = await Hotel.update(hotel, {
+    where: { id },
+  });
+  logger.info(`Hotel updated with id: ${id}`);
+  return updatedHotel;
+}
+
+export async function deleteHotel(id: number) {
+  const deletedHotel = await Hotel.destroy({ where: { id } });
+  if (!deletedHotel) {
+    logger.error(`Hotel not found with id: ${id}`);
+    throw new NotFoundError(`Hotel not found with id: ${id}`);
+  }
+  logger.info(`Hotel deleted with id: ${id}`);
+  return deletedHotel;
 }

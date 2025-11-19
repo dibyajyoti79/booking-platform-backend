@@ -10,7 +10,7 @@ export const appErrorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  logger.error(err);
+  logger.error(`[${req.method}] ${req.originalUrl}`, err);
 
   // Zod validation error
   if (err instanceof ZodError) {

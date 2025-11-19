@@ -27,3 +27,16 @@ export const validateQueryParams = (schema: AnyZodObject) => {
     }
   };
 };
+
+export const validateParams = (schema: AnyZodObject) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      logger.info("Validating params");
+      req.params = await schema.parseAsync(req.params);
+      logger.info("Params are valid");
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};

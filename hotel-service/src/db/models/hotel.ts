@@ -15,8 +15,8 @@ class Hotel extends Model<
   declare name: string;
   declare address: string;
   declare location: string;
-  declare rating: number;
-  declare rating_count: number;
+  declare rating?: number;
+  declare rating_count?: number;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }

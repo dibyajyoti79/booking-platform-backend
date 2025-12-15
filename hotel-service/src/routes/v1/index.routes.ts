@@ -1,6 +1,6 @@
 import express from "express";
 import pingRouter from "./ping.routes";
-import hotelRouter from "./hotel.router";
+import hotelRouter from "./hotel.routes";
 
 const v1Router = express.Router();
 

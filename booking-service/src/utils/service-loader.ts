@@ -1,67 +1,33 @@
 import * as grpc from "@grpc/grpc-js";
 import logger from "../config/logger.config";
 import { ServiceConfig } from "../config/service-registry";
-import { loadProto } from "./proto-loader";
 
 /**
  * Service Loader
- * Industry standard: Auto-discovery and registration of gRPC services
+ * Industry standard: Use generated service definitions directly
  *
- * This utility automatically loads proto files and registers handlers,
- * making it easy to add new services without modifying server code.
+ * Modern approach: No runtime proto loading, uses generated TypeScript types
+ * Benefits:
+ * - Type-safe service registration
+ * - No proto files needed at runtime
+ * - Faster startup
+ * - Better IDE support
  */
 export class ServiceLoader {
   /**
-   * Load service from proto file and return service definition
-   */
-  private static loadServiceDefinition(
-    protoFile: string,
-    packagePath: string
-  ): any | null {
-    try {
-      const proto = loadProto(protoFile);
-      const packageDef = grpc.loadPackageDefinition(proto) as any;
-
-      // Navigate through package hierarchy (e.g., "booking.v1.HealthService")
-      const parts = packagePath.split(".");
-      let service = packageDef;
-
-      for (const part of parts) {
-        if (service && service[part]) {
-          service = service[part];
-        } else {
-          logger.error(
-            `Service path not found: ${packagePath} in ${protoFile}`
-          );
-          return null;
-        }
-      }
-
-      return service;
-    } catch (error) {
-      logger.error(`Failed to load proto file ${protoFile}:`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Register a single service
+   * Register a single service using generated service definition
+   * Industry standard: Direct service definition usage
    */
   static registerService(server: grpc.Server, config: ServiceConfig): boolean {
-    const serviceDef = this.loadServiceDefinition(
-      config.protoFile,
-      config.packagePath
-    );
-
-    if (!serviceDef?.service) {
+    if (!config.serviceDefinition) {
       logger.error(
-        `Failed to load service definition for ${config.serviceName}`
+        `Service definition missing for ${config.serviceName}`
       );
       return false;
     }
 
     try {
-      server.addService(serviceDef.service, config.handlers);
+      server.addService(config.serviceDefinition, config.handlers);
       logger.info(`✓ ${config.serviceName} registered successfully`);
       return true;
     } catch (error) {

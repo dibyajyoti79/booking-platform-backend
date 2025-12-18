@@ -5,10 +5,12 @@ import { handleGrpcError } from "../interceptors/error.interceptor";
 import { withServerInterceptor } from "../interceptors/server.interceptor";
 import { BookingService } from "../services/booking.service";
 import {
-  bookingToProto,
-  mapProtoStatusToDomain,
+  bookingToDto,
+  createBookingRequestToDomain,
+  updateBookingStatusRequestToDomain,
+  listUserBookingsRequestToDomain,
 } from "../mappers/booking.mapper";
-import { CreateBookingInput } from "../types/booking.types";
+// Industry standard: Import from generated proto types
 import type {
   CreateBookingRequest,
   GetBookingRequest,
@@ -17,7 +19,7 @@ import type {
   ListUserBookingsRequest,
   BookingResponse,
   ListBookingsResponse,
-} from "../types/booking.proto.types";
+} from "../proto/generated/booking";
 
 // Type definitions for booking service handlers
 interface BookingServiceHandlers extends grpc.UntypedServiceImplementation {
@@ -45,35 +47,18 @@ const createBookingHandler: BookingServiceHandlers["CreateBooking"] = async (
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
   try {
-    const {
-      user_id,
-      hotel_id,
-      booking_amount,
-      check_in,
-      check_out,
-      total_guests,
-    } = call.request;
-
     logger.info({
       correlationId: getCorrelationId(),
       method: "CreateBooking",
-      userId: user_id,
-      hotelId: hotel_id,
+      userId: call.request.userId,
+      hotelId: call.request.hotelId,
     });
 
-    const input: CreateBookingInput = {
-      userId: user_id,
-      hotelId: hotel_id,
-      bookingAmount: parseFloat(booking_amount),
-      checkIn: new Date(check_in * 1000),
-      checkOut: new Date(check_out * 1000),
-      totalGuests: total_guests,
-    };
-
+    const input = createBookingRequestToDomain(call.request);
     const booking = await bookingService.createBooking(input);
 
     const response: BookingResponse = {
-      booking: bookingToProto(booking),
+      booking: bookingToDto(booking),
     };
 
     callback(null, response);
@@ -90,18 +75,18 @@ const getBookingHandler: BookingServiceHandlers["GetBooking"] = async (
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
   try {
-    const { booking_id } = call.request;
+    const { bookingId } = call.request;
 
     logger.info({
       correlationId: getCorrelationId(),
       method: "GetBooking",
-      bookingId: booking_id,
+      bookingId: bookingId,
     });
 
-    const booking = await bookingService.getBookingById(booking_id);
+    const booking = await bookingService.getBookingById(bookingId);
 
     const response: BookingResponse = {
-      booking: bookingToProto(booking),
+      booking: bookingToDto(booking),
     };
 
     callback(null, response);
@@ -119,23 +104,18 @@ const updateBookingStatusHandler: BookingServiceHandlers["UpdateBookingStatus"] 
     callback: grpc.sendUnaryData<BookingResponse>
   ) => {
     try {
-      const { booking_id, status } = call.request;
-
       logger.info({
         correlationId: getCorrelationId(),
         method: "UpdateBookingStatus",
-        bookingId: booking_id,
-        status,
+        bookingId: call.request.bookingId,
+        status: call.request.status,
       });
 
-      const bookingStatus = mapProtoStatusToDomain(status);
-      const booking = await bookingService.updateBookingStatus({
-        bookingId: booking_id,
-        status: bookingStatus,
-      });
+      const input = updateBookingStatusRequestToDomain(call.request);
+      const booking = await bookingService.updateBookingStatus(input);
 
       const response: BookingResponse = {
-        booking: bookingToProto(booking),
+        booking: bookingToDto(booking),
       };
 
       callback(null, response);
@@ -152,18 +132,18 @@ const cancelBookingHandler: BookingServiceHandlers["CancelBooking"] = async (
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
   try {
-    const { booking_id } = call.request;
+    const { bookingId } = call.request;
 
     logger.info({
       correlationId: getCorrelationId(),
       method: "CancelBooking",
-      bookingId: booking_id,
+      bookingId: bookingId,
     });
 
-    const booking = await bookingService.cancelBooking(booking_id);
+    const booking = await bookingService.cancelBooking(bookingId);
 
     const response: BookingResponse = {
-      booking: bookingToProto(booking),
+      booking: bookingToDto(booking),
     };
 
     callback(null, response);
@@ -181,27 +161,22 @@ const listUserBookingsHandler: BookingServiceHandlers["ListUserBookings"] =
     callback: grpc.sendUnaryData<ListBookingsResponse>
   ) => {
     try {
-      const { user_id, page = 1, page_size = 10 } = call.request;
-
       logger.info({
         correlationId: getCorrelationId(),
         method: "ListUserBookings",
-        userId: user_id,
-        page,
-        pageSize: page_size,
+        userId: call.request.userId,
+        page: call.request.page || 1,
+        pageSize: call.request.pageSize || 10,
       });
 
-      const result = await bookingService.listUserBookings({
-        userId: user_id,
-        page,
-        pageSize: page_size,
-      });
+      const input = listUserBookingsRequestToDomain(call.request);
+      const result = await bookingService.listUserBookings(input);
 
       const response: ListBookingsResponse = {
-        bookings: result.bookings.map(bookingToProto),
+        bookings: result.bookings.map(bookingToDto),
         total: result.total,
         page: result.page,
-        page_size: result.pageSize,
+        pageSize: result.pageSize,
       };
 
       callback(null, response);

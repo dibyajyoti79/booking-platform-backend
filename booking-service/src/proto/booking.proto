@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package booking.v1;
+
+// Booking service for managing hotel bookings
+service BookingService {
+  // Create a new booking
+  rpc CreateBooking(CreateBookingRequest) returns (BookingResponse);
+  
+  // Get booking by ID
+  rpc GetBooking(GetBookingRequest) returns (BookingResponse);
+  
+  // Update booking status
+  rpc UpdateBookingStatus(UpdateBookingStatusRequest) returns (BookingResponse);
+  
+  // Cancel a booking
+  rpc CancelBooking(CancelBookingRequest) returns (BookingResponse);
+  
+  // List bookings for a user
+  rpc ListUserBookings(ListUserBookingsRequest) returns (ListBookingsResponse);
+}
+
+message CreateBookingRequest {
+  int32 user_id = 1;
+  int32 hotel_id = 2;
+  string booking_amount = 3; // Decimal as string
+  int64 check_in = 4; // Unix timestamp in seconds
+  int64 check_out = 5; // Unix timestamp in seconds
+  int32 total_guests = 6;
+}
+
+message GetBookingRequest {
+  string booking_id = 1;
+}
+
+message UpdateBookingStatusRequest {
+  string booking_id = 1;
+  BookingStatus status = 2;
+}
+
+message CancelBookingRequest {
+  string booking_id = 1;
+}
+
+message ListUserBookingsRequest {
+  int32 user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message BookingResponse {
+  Booking booking = 1;
+}
+
+message ListBookingsResponse {
+  repeated Booking bookings = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message Booking {
+  string id = 1;
+  int32 user_id = 2;
+  int32 hotel_id = 3;
+  string booking_amount = 4;
+  BookingStatus booking_status = 5;
+  int64 check_in = 6; // Unix timestamp in seconds
+  int64 check_out = 7; // Unix timestamp in seconds
+  int32 total_guests = 8;
+  int64 created_at = 9; // Unix timestamp in seconds
+  int64 updated_at = 10; // Unix timestamp in seconds
+}
+
+enum BookingStatus {
+  BOOKING_STATUS_UNSPECIFIED = 0;
+  BOOKING_STATUS_PENDING = 1;
+  BOOKING_STATUS_CONFIRMED = 2;
+  BOOKING_STATUS_CANCELLED = 3;
+}
+

@@ -3,17 +3,23 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy:proto",
+    "copy:proto": "node scripts/copy-proto.js",
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts"
+    "dev": "nodemon src/server.ts",
+    "proto:generate": "grpc_tools_node_protoc --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --ts_out=./src/proto/generated --proto_path=./src/proto ./src/proto/**/*.proto"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "@prisma/adapter-mariadb": "^7.2.0",
+    "@prisma/client": "^7.1.0",
     "dotenv": "^16.4.7",
-    "express": "^5.1.0",
+    "grpc-tools": "^1.13.1",
     "http-status-codes": "^2.3.0",
     "prisma": "^7.1.0",
     "uuid": "^11.1.0",
@@ -22,7 +28,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/express": "^5.0.1",
     "@types/node": "^22.14.0",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",

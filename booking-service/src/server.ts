@@ -1,19 +1,92 @@
-import express from "express";
+import * as grpc from "@grpc/grpc-js";
 import { serverConfig } from "./config";
-import v1Router from "./routes/v1/index.routes";
-import { appErrorHandler } from "./middlewares/error.middleware";
 import logger from "./config/logger.config";
-import { attachCorrelationIdMiddleware } from "./middlewares/correlation.middleware";
-const app = express();
+import { SERVICE_REGISTRY } from "./config/service-registry";
+import { ServiceLoader } from "./utils/service-loader";
 
-app.use(express.json());
+/**
+ * gRPC Server Implementation
+ * Industry standard: Use @grpc/grpc-js for Node.js gRPC server
+ */
+class GrpcServer {
+  private server: grpc.Server;
 
-app.use(attachCorrelationIdMiddleware);
-app.use("/api/v1", v1Router);
+  constructor() {
+    // Create gRPC server
+    // Server-side interceptors are applied at handler level
+    this.server = new grpc.Server();
+  }
 
-app.use(appErrorHandler);
+  /**
+   * Register all services from registry
+   * Industry standard: Auto-discovery pattern for scalable service registration
+   *
+   * Services are automatically registered from SERVICE_REGISTRY.
+   * To add a new service, simply add it to the registry - no server code changes needed.
+   */
+  private registerServices(): void {
+    const result = ServiceLoader.registerAllServices(
+      this.server,
+      SERVICE_REGISTRY
+    );
 
-app.listen(serverConfig.PORT, () => {
-  logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
-  logger.info(`Press Ctrl+C to stop the server.`);
+    if (result.failed > 0) {
+      logger.warn(
+        `Some services failed to register. Server may not function correctly.`
+      );
+    }
+
+    if (result.registered === 0) {
+      logger.error("No services registered. Server cannot start.");
+      throw new Error("No services registered");
+    }
+  }
+
+  /**
+   * Start the gRPC server
+   */
+  public start(): void {
+    this.registerServices();
+
+    const port = `0.0.0.0:${serverConfig.PORT}`;
+
+    this.server.bindAsync(
+      port,
+      grpc.ServerCredentials.createInsecure(),
+      (error, port) => {
+        if (error) {
+          logger.error(`Failed to start gRPC server: ${error.message}`);
+          process.exit(1);
+        }
+
+        this.server.start();
+        logger.info(`gRPC server is running on ${port}`);
+        logger.info(`Press Ctrl+C to stop the server.`);
+      }
+    );
+  }
+
+  /**
+   * Graceful shutdown
+   */
+  public shutdown(): void {
+    logger.info("Shutting down gRPC server...");
+    this.server.forceShutdown();
+    logger.info("gRPC server shut down complete");
+  }
+}
+
+// Create and start server
+const grpcServer = new GrpcServer();
+grpcServer.start();
+
+// Graceful shutdown handlers
+process.on("SIGINT", () => {
+  grpcServer.shutdown();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  grpcServer.shutdown();
+  process.exit(0);
 });

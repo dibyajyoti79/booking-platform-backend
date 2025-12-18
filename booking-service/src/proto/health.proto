@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package booking.v1;
+
+// Health service for checking service status
+service HealthService {
+  // Ping endpoint for basic connectivity check
+  rpc Ping(PingRequest) returns (PingResponse);
+  
+  // Health check endpoint with detailed system information
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message PingRequest {
+  // Empty request for ping
+}
+
+message PingResponse {
+  string message = 1;
+}
+
+message HealthCheckRequest {
+  // Empty request for health check
+}
+
+message HealthCheckResponse {
+  string status = 1;
+  HealthData data = 2;
+  int64 timestamp = 3;
+}
+
+message HealthData {
+  ApplicationHealth application = 1;
+  SystemHealth system = 2;
+}
+
+message ApplicationHealth {
+  string environment = 1;
+  string uptime = 2;
+  MemoryUsage memory_usage = 3;
+}
+
+message MemoryUsage {
+  string heap_total = 1;
+  string heap_used = 2;
+}
+
+message SystemHealth {
+  repeated double cpu_usage = 1;
+  string total_memory = 2;
+  string free_memory = 3;
+}
+

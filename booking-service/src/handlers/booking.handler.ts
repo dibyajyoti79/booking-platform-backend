@@ -19,22 +19,8 @@ import type {
   ListUserBookingsRequest,
   BookingResponse,
   ListBookingsResponse,
+  BookingServiceServer,
 } from "../proto/generated/booking";
-
-// Type definitions for booking service handlers
-interface BookingServiceHandlers extends grpc.UntypedServiceImplementation {
-  CreateBooking: grpc.handleUnaryCall<CreateBookingRequest, BookingResponse>;
-  GetBooking: grpc.handleUnaryCall<GetBookingRequest, BookingResponse>;
-  UpdateBookingStatus: grpc.handleUnaryCall<
-    UpdateBookingStatusRequest,
-    BookingResponse
-  >;
-  CancelBooking: grpc.handleUnaryCall<CancelBookingRequest, BookingResponse>;
-  ListUserBookings: grpc.handleUnaryCall<
-    ListUserBookingsRequest,
-    ListBookingsResponse
-  >;
-}
 
 // Initialize service
 const bookingService = new BookingService();
@@ -42,7 +28,7 @@ const bookingService = new BookingService();
 /**
  * Create a new booking
  */
-const createBookingHandler: BookingServiceHandlers["CreateBooking"] = async (
+const createBookingHandler: BookingServiceServer["createBooking"] = async (
   call: grpc.ServerUnaryCall<CreateBookingRequest, BookingResponse>,
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
@@ -70,7 +56,7 @@ const createBookingHandler: BookingServiceHandlers["CreateBooking"] = async (
 /**
  * Get booking by ID
  */
-const getBookingHandler: BookingServiceHandlers["GetBooking"] = async (
+const getBookingHandler: BookingServiceServer["getBooking"] = async (
   call: grpc.ServerUnaryCall<GetBookingRequest, BookingResponse>,
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
@@ -98,7 +84,7 @@ const getBookingHandler: BookingServiceHandlers["GetBooking"] = async (
 /**
  * Update booking status
  */
-const updateBookingStatusHandler: BookingServiceHandlers["UpdateBookingStatus"] =
+const updateBookingStatusHandler: BookingServiceServer["updateBookingStatus"] =
   async (
     call: grpc.ServerUnaryCall<UpdateBookingStatusRequest, BookingResponse>,
     callback: grpc.sendUnaryData<BookingResponse>
@@ -127,7 +113,7 @@ const updateBookingStatusHandler: BookingServiceHandlers["UpdateBookingStatus"] 
 /**
  * Cancel a booking
  */
-const cancelBookingHandler: BookingServiceHandlers["CancelBooking"] = async (
+const cancelBookingHandler: BookingServiceServer["cancelBooking"] = async (
   call: grpc.ServerUnaryCall<CancelBookingRequest, BookingResponse>,
   callback: grpc.sendUnaryData<BookingResponse>
 ) => {
@@ -155,7 +141,7 @@ const cancelBookingHandler: BookingServiceHandlers["CancelBooking"] = async (
 /**
  * List bookings for a user
  */
-const listUserBookingsHandler: BookingServiceHandlers["ListUserBookings"] =
+const listUserBookingsHandler: BookingServiceServer["listUserBookings"] =
   async (
     call: grpc.ServerUnaryCall<ListUserBookingsRequest, ListBookingsResponse>,
     callback: grpc.sendUnaryData<ListBookingsResponse>
@@ -186,10 +172,11 @@ const listUserBookingsHandler: BookingServiceHandlers["ListUserBookings"] =
   };
 
 // Apply server interceptor to all handlers
-export const bookingHandlers: BookingServiceHandlers = {
-  CreateBooking: withServerInterceptor(createBookingHandler),
-  GetBooking: withServerInterceptor(getBookingHandler),
-  UpdateBookingStatus: withServerInterceptor(updateBookingStatusHandler),
-  CancelBooking: withServerInterceptor(cancelBookingHandler),
-  ListUserBookings: withServerInterceptor(listUserBookingsHandler),
+// Industry standard: Use camelCase keys to match generated service definition
+export const bookingHandlers: BookingServiceServer = {
+  createBooking: withServerInterceptor(createBookingHandler),
+  getBooking: withServerInterceptor(getBookingHandler),
+  updateBookingStatus: withServerInterceptor(updateBookingStatusHandler),
+  cancelBooking: withServerInterceptor(cancelBookingHandler),
+  listUserBookings: withServerInterceptor(listUserBookingsHandler),
 };

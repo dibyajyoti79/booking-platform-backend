@@ -3,15 +3,27 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
 }
+
 model Booking {
-  id String @id @default(uuid())
-  userId Int @map("user_id")
-  hotelId Int @map("hotel_id")
-  bookingAmount Decimal @map("booking_amount")
-  bookingStatus BookingStatus @default(PENDING) @map("booking_status")
-  checkIn DateTime @map("check_in")
-  checkOut DateTime @map("check_out")
-  totalGuests Int @map("total_guests")
+  id             Int             @id @default(autoincrement())
+  userId         Int             @map("user_id")
+  hotelId        Int             @map("hotel_id")
+  bookingAmount  Decimal         @map("booking_amount")
+  bookingStatus  BookingStatus   @default(PENDING) @map("booking_status")
+  checkIn        DateTime        @map("check_in")
+  checkOut       DateTime        @map("check_out")
+  totalGuests    Int             @map("total_guests")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  idempotencyKey IdempotencyKey?
+}
+
+model IdempotencyKey {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @map("key")
+  bookingId Int      @unique @map("booking_id")
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  finalized Boolean  @default(false) @map("finalized")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 }

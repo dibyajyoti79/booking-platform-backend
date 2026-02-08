@@ -1,15 +1,27 @@
 import { CreateBookingDto } from "../dtos/booking.dto";
 import { prisma } from "../prisma/client";
 import type { IdempotencyKey, Booking } from "../prisma/generated/client";
+import { Prisma } from "../prisma/generated/client";
+import { BadRequestError, NotFoundError } from "../utils/api-error";
+import { validate as isValidUUID } from "uuid";
 
 export interface IBookingRepository {
   create(data: CreateBookingDto, amount: number): Promise<Booking>;
   getBookingById(id: number): Promise<Booking | null>;
-  confirmBooking(id: number): Promise<Booking>;
+  confirmBooking(
+    tx: Prisma.TransactionClient,
+    bookingId: number
+  ): Promise<Booking>;
   cancelBooking(id: number): Promise<Booking>;
   createIdempotencyKey(key: string, bookingId: number): Promise<IdempotencyKey>;
-  getIdempotencyKey(key: string): Promise<IdempotencyKey | null>;
-  finalizeIdempotencyKey(id: number): Promise<IdempotencyKey>;
+  getIdempotencyKeyWithLock(
+    tx: Prisma.TransactionClient,
+    key: string
+  ): Promise<IdempotencyKey>;
+  finalizeIdempotencyKey(
+    tx: Prisma.TransactionClient,
+    key: string
+  ): Promise<IdempotencyKey>;
 }
 
 export class BookingRepository implements IBookingRepository {
@@ -38,10 +50,13 @@ export class BookingRepository implements IBookingRepository {
     return booking;
   }
 
-  async confirmBooking(id: number): Promise<Booking> {
-    const booking = await prisma.booking.update({
+  async confirmBooking(
+    tx: Prisma.TransactionClient,
+    bookingId: number
+  ): Promise<Booking> {
+    const booking = await tx.booking.update({
       where: {
-        id,
+        id: bookingId,
       },
       data: {
         bookingStatus: "CONFIRMED",
@@ -68,7 +83,7 @@ export class BookingRepository implements IBookingRepository {
   ): Promise<IdempotencyKey> {
     const idempotencyKey = await prisma.idempotencyKey.create({
       data: {
-        key,
+        idemKey: key,
         booking: {
           connect: {
             id: bookingId,
@@ -79,23 +94,34 @@ export class BookingRepository implements IBookingRepository {
     return idempotencyKey;
   }
 
-  async getIdempotencyKey(key: string): Promise<IdempotencyKey | null> {
-    return prisma.idempotencyKey.findUnique({
-      where: {
-        key,
-      },
-    });
+  async getIdempotencyKeyWithLock(tx: Prisma.TransactionClient, key: string) {
+    if (!isValidUUID(key)) {
+      throw new BadRequestError("Invalid idempotency key format");
+    }
+
+    const idempotencyKey: Array<IdempotencyKey> = await tx.$queryRaw(
+      Prisma.raw(
+        `SELECT * FROM idempotencykey WHERE idemKey = '${key}' FOR UPDATE;`
+      )
+    );
+
+    if (!idempotencyKey || idempotencyKey.length === 0) {
+      throw new NotFoundError("Idempotency key not found");
+    }
+
+    return idempotencyKey[0];
   }
 
-  async finalizeIdempotencyKey(id: number): Promise<IdempotencyKey> {
-    const idempotencyKey = await prisma.idempotencyKey.update({
+  async finalizeIdempotencyKey(tx: Prisma.TransactionClient, key: string) {
+    const idempotencyKey = await tx.idempotencyKey.update({
       where: {
-        id,
+        idemKey: key,
       },
       data: {
         finalized: true,
       },
     });
+
     return idempotencyKey;
   }
 }

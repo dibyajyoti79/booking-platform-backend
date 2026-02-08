@@ -17,6 +17,7 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "bullmq": "^5.67.3",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "http-status-codes": "^2.3.0",

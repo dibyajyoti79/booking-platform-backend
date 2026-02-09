@@ -9,7 +9,7 @@ export async function createHotel(hotel: CreateHotelDto) {
     address: hotel.address,
     location: hotel.location,
     rating: hotel.rating,
-    rating_count: hotel.rating_count,
+    ratingCount: hotel.ratingCount,
   });
   logger.info(`Hotel Created: ${newHotel.id}`);
   return newHotel;

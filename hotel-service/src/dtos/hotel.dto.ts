@@ -3,7 +3,7 @@ export interface CreateHotelDto {
   address: string;
   location: string;
   rating?: number;
-  rating_count?: number;
+  ratingCount?: number;
 }
 
 export interface UpdateHotelDto {
@@ -11,5 +11,5 @@ export interface UpdateHotelDto {
   address?: string;
   location?: string;
   rating?: number;
-  rating_count?: number;
+  ratingCount?: number;
 }

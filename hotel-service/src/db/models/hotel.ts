@@ -16,7 +16,7 @@ class Hotel extends Model<
   declare address: string;
   declare location: string;
   declare rating?: number;
-  declare rating_count?: number;
+  declare ratingCount?: number;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -44,7 +44,7 @@ Hotel.init(
       type: DataTypes.DECIMAL(3, 2),
       allowNull: true,
     },
-    rating_count: {
+    ratingCount: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
@@ -64,7 +64,7 @@ Hotel.init(
     tableName: "hotels",
     underscored: true,
     timestamps: true,
-  }
+  },
 );
 
 export default Hotel;

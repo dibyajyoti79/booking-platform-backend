@@ -1,49 +1,40 @@
-import Hotel from "../db/models/hotel";
-import { CreateHotelDto, UpdateHotelDto } from "../dtos/hotel.dto";
 import logger from "../config/logger.config";
+import Hotel from "../db/models/hotel";
 import { NotFoundError } from "../utils/api-error";
+import BaseRepository from "./base.repository";
 
-export async function createHotel(hotel: CreateHotelDto) {
-  const newHotel = await Hotel.create({
-    name: hotel.name,
-    address: hotel.address,
-    location: hotel.location,
-    rating: hotel.rating,
-    ratingCount: hotel.ratingCount,
-  });
-  logger.info(`Hotel Created: ${newHotel.id}`);
-  return newHotel;
-}
-
-export async function getHotelById(id: number) {
-  const hotel = await Hotel.findByPk(id);
-  if (!hotel) {
-    logger.error(`Hotel not found with id: ${id}`);
-    throw new NotFoundError(`Hotel not found with id: ${id}`);
+export class HotelRepository extends BaseRepository<Hotel> {
+  constructor() {
+    super(Hotel);
   }
-  logger.info(`Hotel found with id: ${id}`);
-  return hotel;
-}
 
-export async function getHotels() {
-  const hotels = await Hotel.findAll();
-  return hotels;
-}
+  async findAll() {
+    const hotels = await this.model.findAll({
+      where: {
+        deletedAt: null,
+      },
+    });
 
-export async function updateHotel(id: number, hotel: UpdateHotelDto) {
-  const updatedHotel = await Hotel.update(hotel, {
-    where: { id },
-  });
-  logger.info(`Hotel updated with id: ${id}`);
-  return updatedHotel;
-}
+    if (!hotels) {
+      logger.error(`No hotels found`);
+      throw new NotFoundError(`No hotels found`);
+    }
 
-export async function deleteHotel(id: number) {
-  const deletedHotel = await Hotel.destroy({ where: { id } });
-  if (!deletedHotel) {
-    logger.error(`Hotel not found with id: ${id}`);
-    throw new NotFoundError(`Hotel not found with id: ${id}`);
+    logger.info(`Hotels found: ${hotels.length}`);
+    return hotels;
   }
-  logger.info(`Hotel deleted with id: ${id}`);
-  return deletedHotel;
+
+  async softDelete(id: number) {
+    const hotel = await Hotel.findByPk(id);
+
+    if (!hotel) {
+      logger.error(`Hotel not found: ${id}`);
+      throw new NotFoundError(`Hotel with id ${id} not found`);
+    }
+
+    hotel.deletedAt = new Date();
+    await hotel.save(); // Save the changes to the database
+    logger.info(`Hotel soft deleted: ${hotel.id}`);
+    return true;
+  }
 }

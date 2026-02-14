@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { AnyZodObject } from "zod";
+import { AnyZodObject, ZodTypeAny } from "zod";
 import logger from "../config/logger.config";
 
-export const validateRequestBody = (schema: AnyZodObject) => {
+export const validateRequestBody = (schema: AnyZodObject | ZodTypeAny) => {
   return async (
     req: Request,
     res: Response,
@@ -19,7 +19,7 @@ export const validateRequestBody = (schema: AnyZodObject) => {
   };
 };
 
-export const validateQueryParams = (schema: AnyZodObject) => {
+export const validateQueryParams = (schema: AnyZodObject | ZodTypeAny) => {
   return async (
     req: Request,
     res: Response,
@@ -36,7 +36,7 @@ export const validateQueryParams = (schema: AnyZodObject) => {
   };
 };
 
-export const validateParams = (schema: AnyZodObject) => {
+export const validateParams = (schema: AnyZodObject | ZodTypeAny) => {
   return async (
     req: Request,
     res: Response,

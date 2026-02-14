@@ -22,17 +22,11 @@ func NewUserController(_userService services.UserService) *UserController {
 	}
 }
 
-// GetUserById returns the current user's profile. User is already loaded and set in context by JWT middleware.
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(middlewares.ContextKeyUser).(*models.User)
-	if user == nil {
-		utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Unauthorized", fmt.Errorf("user not in context"))
-		return
-	}
+	user := r.Context().Value(middlewares.ContextKeyUser).(*models.User)
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
 }
 
-// Signup registers a user and sends a verification email. Idempotent for unverified same email (resends link).
 func (uc *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 	payload := r.Context().Value("signup_payload").(dto.SignupRequestDTO)
 
@@ -51,7 +45,6 @@ func (uc *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJsonSuccessResponse(w, http.StatusCreated, "Please check your email for the verification link", nil)
 }
 
-// VerifyEmail confirms the user's email when they click the link (token in query).
 func (uc *UserController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	err := uc.UserService.VerifyEmail(token)

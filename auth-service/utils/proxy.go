@@ -3,40 +3,43 @@ package utils
 import (
 	"AuthService/contextkeys"
 	"AuthService/models"
-	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
-	"strings"
 )
 
-func ProxyToService(targetBaseUrl string, pathPrefix string) http.HandlerFunc {
-	target, err := url.Parse(targetBaseUrl)
+// Header names forwarded to upstream (use same constants in downstream services).
+const (
+	HeaderXUserID    = "X-User-ID"
+	HeaderXUserEmail = "X-User-Email"
+	HeaderXUserRole  = "X-User-Role"
+)
+
+func ProxyToService(serviceBaseURL string) http.HandlerFunc {
+	target, err := url.Parse(serviceBaseURL)
 	if err != nil {
-		fmt.Println("Error parsing target URL:", err)
-		return nil
-	}
-
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	originalDirector := proxy.Director
-
-	proxy.Director = func(r *http.Request) {
-		originalDirector(r)
-
-		originalPath := r.URL.Path
-		strippedPath := strings.TrimPrefix(originalPath, pathPrefix)
-
-		r.URL.Host = target.Host
-		r.URL.Path = target.Path + strippedPath
-		r.Host = target.Host
-
-		if user, ok := r.Context().Value(contextkeys.ContextKeyUser).(*models.User); ok {
-			r.Header.Set("X-User-ID", strconv.FormatInt(user.Id, 10))
-			r.Header.Set("X-User-Email", user.Email)
-			r.Header.Set("X-User-Role", user.Role)
+		log.Printf("[proxy] invalid service URL %q: %v", serviceBaseURL, err)
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"status":"error","message":"Proxy misconfigured"}`))
 		}
 	}
-
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	origDirector := proxy.Director
+	proxy.Director = func(r *http.Request) {
+		origDirector(r)
+		addUserHeaders(r)
+	}
 	return proxy.ServeHTTP
+}
+
+func addUserHeaders(r *http.Request) {
+	if user, ok := r.Context().Value(contextkeys.ContextKeyUser).(*models.User); ok {
+		r.Header.Set(HeaderXUserID, strconv.FormatInt(user.Id, 10))
+		r.Header.Set(HeaderXUserEmail, user.Email)
+		r.Header.Set(HeaderXUserRole, user.Role)
+	}
 }

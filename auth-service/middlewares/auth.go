@@ -2,8 +2,10 @@ package middlewares
 
 import (
 	env "AuthService/config/env"
+	db "AuthService/db/repositories"
 	"context"
-	"fmt"
+	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,52 +13,71 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
+// Context keys for auth data (use typed key to avoid collisions).
+type contextKey string
 
-		if authHeader == "" {
-			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
-			return
-		}
+const ContextKeyUser contextKey = "user"
 
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Authorization header must start with Bearer", http.StatusUnauthorized)
-			return
-		}
+func NewJWTAuthMiddleware(userRepo db.UserRepository) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				writeUnauthorized(w, "Authorization header is required")
+				return
+			}
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				writeUnauthorized(w, "Authorization header must start with Bearer")
+				return
+			}
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenStr == "" {
+				writeUnauthorized(w, "Token is required")
+				return
+			}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == "" {
-			http.Error(w, "Token is required", http.StatusUnauthorized)
-			return
-		}
+			claims := jwt.MapClaims{}
+			_, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+				return []byte(env.GetString("JWT_SECRET", "TOKEN")), nil
+			})
+			if err != nil {
+				writeUnauthorized(w, "Invalid or expired token")
+				return
+			}
 
-		claims := jwt.MapClaims{}
+			userIdFloat, okId := claims["id"].(float64)
+			_, okEmail := claims["email"].(string)
+			if !okId || !okEmail {
+				writeUnauthorized(w, "Invalid token claims")
+				return
+			}
 
-		_, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(env.GetString("JWT_SECRET", "TOKEN")), nil
+			userID := strconv.FormatFloat(userIdFloat, 'f', 0, 64)
+			user, err := userRepo.GetByID(userID)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					writeUnauthorized(w, "User not found")
+					return
+				}
+				writeUnauthorized(w, "Unauthorized")
+				return
+			}
+			if user == nil {
+				writeUnauthorized(w, "User not found")
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), ContextKeyUser, user)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
+	}
+}
 
-		if err != nil {
-			http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		userId, okId := claims["id"].(float64)
-
-		email, okEmail := claims["email"].(string)
-
-		if !okId || !okEmail {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
-			return
-		}
-
-		fmt.Println("Authenticated user ID:", int64(userId), "Email:", email)
-
-		ctx := context.WithValue(r.Context(), "userID", strconv.FormatFloat(userId, 'f', 0, 64))
-		ctx = context.WithValue(ctx, "email", email)
-		next.ServeHTTP(w, r.WithContext(ctx))
-
+func writeUnauthorized(w http.ResponseWriter, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"status":  "error",
+		"message": message,
 	})
-
 }

@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"AuthService/controllers"
 	"AuthService/middlewares"
 
@@ -8,17 +10,19 @@ import (
 )
 
 type UserRouter struct {
-	userController *controllers.UserController
+	userController   *controllers.UserController
+	jwtAuthMiddleware func(http.Handler) http.Handler
 }
 
-func NewUserRouter(_userController *controllers.UserController) Router {
+func NewUserRouter(_userController *controllers.UserController, jwtAuth func(http.Handler) http.Handler) Router {
 	return &UserRouter{
-		userController: _userController,
+		userController:   _userController,
+		jwtAuthMiddleware: jwtAuth,
 	}
 }
 
 func (ur *UserRouter) Register(r chi.Router) {
-	r.With(middlewares.JWTAuthMiddleware).Get("/profile", ur.userController.GetUserById)
+	r.With(ur.jwtAuthMiddleware).Get("/profile", ur.userController.GetUserById)
 	r.With(middlewares.SignupRequestValidator).Post("/signup", ur.userController.Signup)
 	r.With(middlewares.UserLoginRequestValidator).Post("/login", ur.userController.LoginUser)
 	r.Get("/verify-email", ur.userController.VerifyEmail)

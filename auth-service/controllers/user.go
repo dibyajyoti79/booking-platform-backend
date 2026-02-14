@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"AuthService/dto"
+	"AuthService/middlewares"
+	"AuthService/models"
 	"AuthService/services"
 	"AuthService/utils"
 )
@@ -20,31 +22,14 @@ func NewUserController(_userService services.UserService) *UserController {
 	}
 }
 
+// GetUserById returns the current user's profile. User is already loaded and set in context by JWT middleware.
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Fetching user by ID in UserController")
-	// extract userid from url parameters
-	userId := r.URL.Query().Get("id")
-	if userId == "" {
-		userId = r.Context().Value("userID").(string) // Fallback to context if not in URL
-	}
-
-	fmt.Println("User ID from context or query:", userId)
-
-	if userId == "" {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "User ID is required", fmt.Errorf("missing user ID"))
-		return
-	}
-	user, err := uc.UserService.GetUserById(userId)
-	if err != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Failed to fetch user", err)
-		return
-	}
+	user, _ := r.Context().Value(middlewares.ContextKeyUser).(*models.User)
 	if user == nil {
-		utils.WriteJsonErrorResponse(w, http.StatusNotFound, "User not found", fmt.Errorf("user with ID %s not found", userId))
+		utils.WriteJsonErrorResponse(w, http.StatusUnauthorized, "Unauthorized", fmt.Errorf("user not in context"))
 		return
 	}
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
-	fmt.Println("User fetched successfully:", user)
 }
 
 // Signup registers a user and sends a verification email. Idempotent for unverified same email (resends link).

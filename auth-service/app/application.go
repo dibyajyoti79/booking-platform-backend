@@ -6,6 +6,7 @@ import (
 	env "AuthService/config/env"
 	"AuthService/controllers"
 	db "AuthService/db/repositories"
+	"AuthService/middlewares"
 	"AuthService/router"
 	"AuthService/services"
 	"fmt"
@@ -46,7 +47,8 @@ func (app *Application) Run() error {
 	notificationClient := notification.NewHTTPClient(notificationBaseURL)
 	userService := services.NewUserService(userRepository, notificationClient, verificationLinkBaseURL)
 	userController := controllers.NewUserController(userService)
-	userRouter := router.NewUserRouter(userController)
+	jwtAuth := middlewares.NewJWTAuthMiddleware(userRepository)
+	userRouter := router.NewUserRouter(userController, jwtAuth)
 
 	server := &http.Server{
 		Addr:         app.Config.Addr,

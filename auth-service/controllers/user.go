@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"AuthService/contextkeys"
 	"AuthService/dto"
-	"AuthService/middlewares"
 	"AuthService/models"
 	"AuthService/services"
 	"AuthService/utils"
@@ -23,7 +23,7 @@ func NewUserController(_userService services.UserService) *UserController {
 }
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(middlewares.ContextKeyUser).(*models.User)
+	user := r.Context().Value(contextkeys.ContextKeyUser).(*models.User)
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
 }
 

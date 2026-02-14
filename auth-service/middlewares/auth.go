@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	env "AuthService/config/env"
+	"AuthService/contextkeys"
 	db "AuthService/db/repositories"
 	"AuthService/models"
 	"context"
@@ -13,11 +14,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// Context keys for auth data (use typed key to avoid collisions).
-type contextKey string
-
-const ContextKeyUser contextKey = "user"
 
 func NewJWTAuthMiddleware(userRepo db.UserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -68,7 +64,7 @@ func NewJWTAuthMiddleware(userRepo db.UserRepository) func(http.Handler) http.Ha
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), ContextKeyUser, user)
+			ctx := context.WithValue(r.Context(), contextkeys.ContextKeyUser, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -81,7 +77,7 @@ func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
 	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user, _ := r.Context().Value(ContextKeyUser).(*models.User)
+			user, _ := r.Context().Value(contextkeys.ContextKeyUser).(*models.User)
 			if user == nil {
 				writeUnauthorized(w, "Unauthorized")
 				return

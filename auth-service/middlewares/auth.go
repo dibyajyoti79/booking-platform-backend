@@ -3,6 +3,7 @@ package middlewares
 import (
 	env "AuthService/config/env"
 	db "AuthService/db/repositories"
+	"AuthService/models"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -73,9 +74,39 @@ func NewJWTAuthMiddleware(userRepo db.UserRepository) func(http.Handler) http.Ha
 	}
 }
 
+func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
+	allowed := make(map[string]struct{}, len(allowedRoles))
+	for _, r := range allowedRoles {
+		allowed[r] = struct{}{}
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user, _ := r.Context().Value(ContextKeyUser).(*models.User)
+			if user == nil {
+				writeUnauthorized(w, "Unauthorized")
+				return
+			}
+			if _, ok := allowed[user.Role]; !ok {
+				writeForbidden(w, "Forbidden: insufficient role")
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func writeUnauthorized(w http.ResponseWriter, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"status":  "error",
+		"message": message,
+	})
+}
+
+func writeForbidden(w http.ResponseWriter, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"status":  "error",
 		"message": message,

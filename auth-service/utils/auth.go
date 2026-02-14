@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	env "AuthService/config/env"
 	"fmt"
 	"strconv"
@@ -9,6 +11,21 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const VerificationTokenBytes = 32
+const VerificationTokenExpiry = 24 * time.Hour
+
+// VerificationTokenNow returns current time (used for token expiry check; can be overridden in tests).
+var VerificationTokenNow = time.Now
+
+// GenerateEmailVerificationToken returns a secure random token and its expiry time.
+func GenerateEmailVerificationToken() (token string, expiresAt time.Time, err error) {
+	b := make([]byte, VerificationTokenBytes)
+	if _, err = rand.Read(b); err != nil {
+		return "", time.Time{}, fmt.Errorf("generate verification token: %w", err)
+	}
+	return hex.EncodeToString(b), VerificationTokenNow().Add(VerificationTokenExpiry), nil
+}
 
 func HashPassword(plainPassword string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)

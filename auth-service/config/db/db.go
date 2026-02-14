@@ -28,6 +28,7 @@ func setupDB() (*sql.DB, error) {
 	cfg.Net = env.GetString("DB_NET", "tcp")
 	cfg.Addr = env.GetString("DB_ADDR", "127.0.0.1:3306")
 	cfg.DBName = env.GetString("DB_NAME", "auth_dev")
+	cfg.ParseTime = true
 
 	fmt.Println("Connecting to database:", cfg.DBName, cfg.FormatDSN())
 

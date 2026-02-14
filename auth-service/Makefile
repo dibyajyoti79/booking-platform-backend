@@ -1,5 +1,5 @@
 MIGRATIONS_FOLDER=db/migrations
-DB_URL=root:Maclocal12345@tcp(127.0.0.1:3306)/auth_dev
+DB_URL=root:root@tcp(127.0.0.1:3306)/auth_dev
 
 # Create a new migration -> gmake migrate-create name="create_entity_table
 migrate-create:

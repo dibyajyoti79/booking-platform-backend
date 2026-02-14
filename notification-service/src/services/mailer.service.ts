@@ -13,6 +13,7 @@ export async function sendEmail(to: string, subject: string, body: string) {
     });
     logger.info(`Email sent to ${to} with subject "${subject}"`);
   } catch (error) {
-    throw new InternalServerError(`Failed to send email`);
+    logger.error(`Failed to send email: ${error}`);
+    throw new InternalServerError(`Failed to send email`, error);
   }
 }

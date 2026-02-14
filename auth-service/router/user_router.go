@@ -23,6 +23,7 @@ func NewUserRouter(_userController *controllers.UserController, jwtAuth func(htt
 
 func (ur *UserRouter) Register(r chi.Router) {
 	r.With(ur.jwtAuthMiddleware).Get("/profile", ur.userController.GetUserById)
+	r.With(ur.jwtAuthMiddleware).Post("/profile/become-host", ur.userController.BecomeHost)
 	r.With(middlewares.SignupRequestValidator).Post("/signup", ur.userController.Signup)
 	r.With(middlewares.UserLoginRequestValidator).Post("/login", ur.userController.LoginUser)
 	r.Get("/verify-email", ur.userController.VerifyEmail)

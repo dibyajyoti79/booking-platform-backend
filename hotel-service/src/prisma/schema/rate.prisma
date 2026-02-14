@@ -1,0 +1,17 @@
+// Rate: price per room type per day
+model Rate {
+  id         Int      @id @default(autoincrement())
+  hotelId    Int
+  roomTypeId Int
+  date       DateTime @db.Date
+  rate       Decimal  @db.Decimal(10, 2) // Price per night
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  hotel    Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, roomTypeId, date])
+  @@index([hotelId, roomTypeId])
+  @@index([date])
+}

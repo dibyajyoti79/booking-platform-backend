@@ -1,29 +1,39 @@
 import { Router } from "express";
-import {
-  createHotelController,
-  deleteHotelController,
-  getHotelByIdController,
-  getHotelsController,
-  updateHotelController,
-} from "../../controllers/hotel.controller";
+
+import { requireRole } from "../../middlewares/authorize.middleware";
 import { validateParams, validateRequestBody } from "../../validators/index";
-import { hotelIdSchema, hotelSchema } from "../../validators/hotel.validator";
+import {
+  hotelIdSchema,
+  hotelSchema,
+  updateHotelSchema,
+} from "../../validators/hotel.validator";
+import {
+  createHotel,
+  getHotelById,
+  getHotels,
+  updateHotel,
+  deleteHotel,
+} from "../../controllers/hotel.controller";
 
 const hotelRouter = Router();
 
-hotelRouter.post("/", validateRequestBody(hotelSchema), createHotelController);
-hotelRouter.get("/:id", validateParams(hotelIdSchema), getHotelByIdController);
-hotelRouter.get("/", getHotelsController);
+const hostOnly = requireRole(["host"]);
+
+hotelRouter.post("/", hostOnly, validateRequestBody(hotelSchema), createHotel);
+hotelRouter.get("/:id", validateParams(hotelIdSchema), getHotelById);
+hotelRouter.get("/", getHotels);
 hotelRouter.put(
   "/:id",
+  hostOnly,
   validateParams(hotelIdSchema),
-  validateRequestBody(hotelSchema),
-  updateHotelController
+  validateRequestBody(updateHotelSchema),
+  updateHotel,
 );
 hotelRouter.delete(
   "/:id",
+  hostOnly,
   validateParams(hotelIdSchema),
-  deleteHotelController
+  deleteHotel,
 );
 
 export default hotelRouter;

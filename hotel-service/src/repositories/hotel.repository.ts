@@ -1,40 +1,33 @@
-import logger from "../config/logger.config";
-import Hotel from "../db/models/hotel";
-import { NotFoundError } from "../utils/api-error";
-import BaseRepository from "./base.repository";
+import type { Hotel } from "../prisma/generated/client";
+import type { CreateHotelDto, UpdateHotelDto } from "../dtos/hotel.dto";
+import { prisma } from "../prisma/client";
 
-export class HotelRepository extends BaseRepository<Hotel> {
-  constructor() {
-    super(Hotel);
+export interface IHotelRepository {
+  findById(id: number): Promise<Hotel | null>;
+  findMany(): Promise<Hotel[]>;
+  create(data: CreateHotelDto): Promise<Hotel>;
+  update(id: number, data: UpdateHotelDto): Promise<Hotel>;
+  delete(id: number): Promise<Hotel>;
+}
+
+export class HotelRepository implements IHotelRepository {
+  async findById(id: number): Promise<Hotel | null> {
+    return prisma.hotel.findUnique({ where: { id } });
   }
 
-  async findAll() {
-    const hotels = await this.model.findAll({
-      where: {
-        deletedAt: null,
-      },
-    });
-
-    if (!hotels) {
-      logger.error(`No hotels found`);
-      throw new NotFoundError(`No hotels found`);
-    }
-
-    logger.info(`Hotels found: ${hotels.length}`);
-    return hotels;
+  async findMany(): Promise<Hotel[]> {
+    return prisma.hotel.findMany();
   }
 
-  async softDelete(id: number) {
-    const hotel = await Hotel.findByPk(id);
+  async create(data: CreateHotelDto): Promise<Hotel> {
+    return prisma.hotel.create({ data });
+  }
 
-    if (!hotel) {
-      logger.error(`Hotel not found: ${id}`);
-      throw new NotFoundError(`Hotel with id ${id} not found`);
-    }
+  async update(id: number, data: UpdateHotelDto): Promise<Hotel> {
+    return prisma.hotel.update({ where: { id }, data });
+  }
 
-    hotel.deletedAt = new Date();
-    await hotel.save(); // Save the changes to the database
-    logger.info(`Hotel soft deleted: ${hotel.id}`);
-    return true;
+  async delete(id: number): Promise<Hotel> {
+    return prisma.hotel.delete({ where: { id } });
   }
 }

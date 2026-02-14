@@ -20,13 +20,12 @@ func SetupRouter(userRouter Router, jwtAuth func(http.Handler) http.Handler) *ch
 
 	userRouter.Register(chiRouter)
 
-	hotelServiceURL := "http://localhost:8001"
-	chiRouter.Route("/hotel", func(r chi.Router) {
-		r.Get("/search", utils.ProxyToService(hotelServiceURL))
-		r.Group(func(r chi.Router) {
-			r.Use(jwtAuth)
-			r.HandleFunc("/*", utils.ProxyToService(hotelServiceURL))
-		})
+	hotelServiceURL := "http://localhost:8000"
+	hotelServiceProxy := utils.ProxyToServiceWithPathRewrite(hotelServiceURL, "/hotel-api", "/api/v1")
+	chiRouter.Route("/hotel-api", func(r chi.Router) {
+		r.Use(jwtAuth)
+		r.Handle("/", hotelServiceProxy)
+		r.Handle("/*", hotelServiceProxy)
 	})
 
 	return chiRouter

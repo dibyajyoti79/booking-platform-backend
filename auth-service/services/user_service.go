@@ -19,6 +19,8 @@ var (
 	ErrInvalidVerificationToken = errors.New("invalid or expired verification token")
 	ErrVerificationTokenExpired = errors.New("verification link has expired; please request a new one")
 	ErrEmailNotVerified         = errors.New("please verify your email before signing in")
+	ErrOnlyGuestsCanBecomeHosts  = errors.New("only guests can become hosts")
+	ErrUserNotFound             = errors.New("user not found")
 )
 
 type UserService interface {
@@ -26,6 +28,7 @@ type UserService interface {
 	Signup(ctx context.Context, payload *dto.SignupRequestDTO) error
 	LoginUser(payload *dto.LoginUserRequestDTO) (*dto.LoginResponseDTO, error)
 	VerifyEmail(token string) error
+	BecomeHost(userID string) (*models.User, error)
 }
 
 type UserServiceImpl struct {
@@ -173,4 +176,26 @@ func (u *UserServiceImpl) LoginUser(payload *dto.LoginUserRequestDTO) (*dto.Logi
 	return &dto.LoginResponseDTO{
 		Token: accessToken,
 	}, nil
+}
+
+// BecomeHost upgrades the current user from guest to host. Idempotent if already host.
+func (u *UserServiceImpl) BecomeHost(userID string) (*models.User, error) {
+	user, err := u.userRepository.GetByID(userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("get user: %w", err)
+	}
+	if user.Role == "host" {
+		return user, nil
+	}
+	if user.Role != "guest" {
+		return nil, ErrOnlyGuestsCanBecomeHosts
+	}
+	if err := u.userRepository.UpdateRole(user.Id, "host"); err != nil {
+		return nil, fmt.Errorf("update role: %w", err)
+	}
+	user.Role = "host"
+	return user, nil
 }

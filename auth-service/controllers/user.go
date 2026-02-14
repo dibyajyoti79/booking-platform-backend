@@ -83,5 +83,23 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJsonSuccessResponse(w, http.StatusOK, "Success", response)
+}
 
+func (uc *UserController) BecomeHost(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(contextkeys.ContextKeyUser).(*models.User)
+	updated, err := uc.UserService.BecomeHost(fmt.Sprintf("%d", user.Id))
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrOnlyGuestsCanBecomeHosts):
+			utils.WriteJsonErrorResponse(w, http.StatusForbidden, "Only guests can become hosts", err)
+			return
+		case errors.Is(err, services.ErrUserNotFound):
+			utils.WriteJsonErrorResponse(w, http.StatusNotFound, "User not found", err)
+			return
+		default:
+			utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Failed to update role", err)
+			return
+		}
+	}
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "You are now a host", updated)
 }

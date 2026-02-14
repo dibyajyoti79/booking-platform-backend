@@ -1,0 +1,11 @@
+// Hotel service Prisma schema
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated"
+}
+
+datasource db {
+  provider = "mysql"
+}

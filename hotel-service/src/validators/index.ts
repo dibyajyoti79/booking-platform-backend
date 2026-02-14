@@ -3,7 +3,11 @@ import { AnyZodObject } from "zod";
 import logger from "../config/logger.config";
 
 export const validateRequestBody = (schema: AnyZodObject) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       logger.info("Validating request body");
       req.body = await schema.parseAsync(req.body);
@@ -16,7 +20,11 @@ export const validateRequestBody = (schema: AnyZodObject) => {
 };
 
 export const validateQueryParams = (schema: AnyZodObject) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       logger.info("Validating query params");
       req.query = await schema.parseAsync(req.query);
@@ -29,7 +37,11 @@ export const validateQueryParams = (schema: AnyZodObject) => {
 };
 
 export const validateParams = (schema: AnyZodObject) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       logger.info("Validating params");
       req.params = await schema.parseAsync(req.params);

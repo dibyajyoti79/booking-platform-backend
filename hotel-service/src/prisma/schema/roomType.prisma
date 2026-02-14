@@ -1,0 +1,15 @@
+// Room Type: room categories per hotel (e.g. Deluxe, Suite)
+model RoomType {
+  id           Int      @id @default(autoincrement())
+  hotelId      Int
+  name         String   // e.g. Deluxe, Suite
+  maxOccupancy Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hotel       Hotel       @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  inventories Inventory[]
+  rates       Rate[]
+
+  @@index([hotelId])
+}

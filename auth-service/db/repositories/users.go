@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetByVerificationToken(token string) (*models.User, error)
 	UpdateVerificationToken(id int64, token string, expiresAt time.Time, hashedPassword string) error
 	MarkEmailVerified(id int64) error
+	UpdateRole(id int64, role string) error
 	GetAll() ([]*models.User, error)
 	DeleteByID(id int64) error
 }
@@ -148,5 +149,11 @@ func (u *UserRepositoryImpl) UpdateVerificationToken(id int64, token string, exp
 func (u *UserRepositoryImpl) MarkEmailVerified(id int64) error {
 	query := `UPDATE users SET email_verified = 1, email_verification_token = NULL, email_verification_token_expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 	_, err := u.db.Exec(query, id)
+	return err
+}
+
+func (u *UserRepositoryImpl) UpdateRole(id int64, role string) error {
+	query := `UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+	_, err := u.db.Exec(query, role, id)
 	return err
 }

@@ -12,7 +12,6 @@ export const appErrorHandler = (
 ) => {
   logger.error(`[${req.method}] ${req.originalUrl}`, err);
 
-  // Zod validation error
   if (err instanceof ZodError) {
     const details = err.errors.map((e: import("zod").ZodIssue) => ({
       path: e.path.join("."),

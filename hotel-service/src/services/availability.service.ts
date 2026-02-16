@@ -3,10 +3,6 @@ import { getDatesInRange } from "../utils/date-range";
 import type { GetQuoteDto, QuoteResultDto } from "../dtos/availability.dto";
 import { NotFoundError } from "../utils/api-error";
 
-/**
- * Returns the list of dates (nights) from checkIn to the day before checkOut (inclusive).
- * e.g. checkIn Jan 1, checkOut Jan 3 => [Jan 1, Jan 2]
- */
 function getNightDates(checkIn: Date, checkOut: Date): Date[] {
   const end = new Date(checkOut);
   end.setUTCDate(end.getUTCDate() - 1);

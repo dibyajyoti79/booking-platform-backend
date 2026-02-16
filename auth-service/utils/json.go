@@ -20,11 +20,9 @@ func NewValidator() *validator.Validate {
 }
 
 func WriteJsonResponse(w http.ResponseWriter, status int, data any) error {
-	w.Header().Set("Content-Type", "application/json") // Set the content type to application/json
-
-	w.WriteHeader(status) // Set the HTTP status code
-
-	return json.NewEncoder(w).Encode(data) // Encode the data as JSON and write it to the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(data)
 }
 
 func WriteJsonSuccessResponse(w http.ResponseWriter, status int, message string, data any) error {
@@ -46,6 +44,6 @@ func WriteJsonErrorResponse(w http.ResponseWriter, status int, message string, e
 
 func ReadJsonBody(r *http.Request, result any) error {
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields() // Prevent unknown fields from being included in the JSON body
+	decoder.DisallowUnknownFields()
 	return decoder.Decode(result)
 }

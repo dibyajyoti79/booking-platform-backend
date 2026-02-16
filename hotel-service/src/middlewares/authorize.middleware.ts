@@ -1,10 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-/**
- * requireRole(allowedRoles) - middleware that checks req header X-User-Role
- * (set by auth-service proxy) is one of the allowed roles. Otherwise responds 403 Forbidden.
- */
 export function requireRole(allowedRoles: string[]) {
   const allowedSet = new Set(allowedRoles.map((r) => r.toLowerCase()));
 

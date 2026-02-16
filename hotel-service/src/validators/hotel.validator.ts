@@ -4,8 +4,8 @@ export const hotelSchema = z.object({
   name: z.string().min(1),
   address: z.string().min(1),
   location: z.string().min(1),
-  checkInTime: z.string().min(1),  // e.g. "14:00"
-  checkOutTime: z.string().min(1), // e.g. "11:00"
+  checkInTime: z.string().min(1),
+  checkOutTime: z.string().min(1),
 });
 
 export const updateHotelSchema = hotelSchema.partial();

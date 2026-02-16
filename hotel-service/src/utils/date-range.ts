@@ -1,6 +1,3 @@
-/**
- * Returns all dates from fromDate to toDate (inclusive), normalized to midnight UTC.
- */
 export function getDatesInRange(fromDate: Date, toDate: Date): Date[] {
   const dates: Date[] = [];
   const from = new Date(fromDate);

@@ -7,10 +7,6 @@ export interface SendNotificationPayload {
   params?: Record<string, unknown>;
 }
 
-/**
- * Calls notification-service to enqueue an email (e.g. reservation confirmation).
- * Returns when the notification is accepted (202); actual send is async in the worker.
- */
 export async function sendNotification(
   payload: SendNotificationPayload
 ): Promise<void> {

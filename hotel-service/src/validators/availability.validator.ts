@@ -12,5 +12,3 @@ export const getQuoteSchema = z
     message: "checkOut must be after checkIn",
     path: ["checkOut"],
   });
-
-export type GetQuoteQuery = z.infer<typeof getQuoteSchema>;

@@ -23,8 +23,8 @@ function connectToRedis() {
 export const getRedisConnObject = connectToRedis();
 
 export const redlock = new Redlock([getRedisConnObject()], {
-  driftFactor: 0.01, // time in ms
+  driftFactor: 0.01,
   retryCount: 10,
-  retryDelay: 200, // time in ms
-  retryJitter: 200, // time in ms
+  retryDelay: 200,
+  retryJitter: 200,
 });

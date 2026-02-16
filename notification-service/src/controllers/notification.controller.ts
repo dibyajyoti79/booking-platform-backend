@@ -5,10 +5,6 @@ import { mailerQueue } from "../queues/mailer.queue";
 import { MAILER_PAYLOAD } from "../processors/email.processor";
 import { ApiResponse } from "../utils/api-response";
 
-/**
- * Receives email payload and enqueues it for async processing.
- * Returns 202 Accepted immediately; actual send happens in the worker.
- */
 export const sendNotificationHandler = async (
   req: Request,
   res: Response

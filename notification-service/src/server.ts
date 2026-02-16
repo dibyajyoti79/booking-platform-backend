@@ -15,7 +15,6 @@ app.use("/api/v1", v1Router);
 
 app.use(appErrorHandler);
 
-// Start the mailer worker so enqueued emails are processed
 setupMailerWorker();
 
 app.listen(serverConfig.PORT, () => {

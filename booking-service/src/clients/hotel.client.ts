@@ -22,10 +22,6 @@ export interface GetQuoteBody {
   totalGuests?: number;
 }
 
-/**
- * Calls hotel-service availability quote endpoint.
- * Uses HOTEL_SERVICE_URL (e.g. http://localhost:3000 for direct service call).
- */
 export async function getQuote(body: GetQuoteBody): Promise<QuoteResult> {
   const baseUrl = serverConfig.HOTEL_SERVICE_URL.replace(/\/$/, "");
   const url = `${baseUrl}/api/v1/availability/quote`;

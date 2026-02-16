@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// SendEmailRequest matches the notification service API contract.
 type SendEmailRequest struct {
 	To         string            `json:"to"`
 	Subject    string            `json:"subject"`

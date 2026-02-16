@@ -12,13 +12,11 @@ func UserLoginRequestValidator(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var payload dto.LoginUserRequestDTO
 
-		// Read and decode the JSON body into the payload
 		if err := utils.ReadJsonBody(r, &payload); err != nil {
 			utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
-		// Validate the payload using the Validator instance
 		if err := utils.Validator.Struct(payload); err != nil {
 			utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Validation failed", err)
 			return
@@ -26,13 +24,12 @@ func UserLoginRequestValidator(next http.Handler) http.Handler {
 
 		fmt.Println("Payload received for login:", payload)
 
-		ctx := context.WithValue(r.Context(), "payload", payload) // Create a new context with the payload
+		ctx := context.WithValue(r.Context(), "payload", payload)
 
-		next.ServeHTTP(w, r.WithContext(ctx)) // Call the next handler in the chain
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// SignupRequestValidator validates name, email, password for signup.
 func SignupRequestValidator(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var payload dto.SignupRequestDTO

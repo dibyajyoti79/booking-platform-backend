@@ -15,10 +15,8 @@ import (
 const VerificationTokenBytes = 32
 const VerificationTokenExpiry = 24 * time.Hour
 
-// VerificationTokenNow returns current time (used for token expiry check; can be overridden in tests).
 var VerificationTokenNow = time.Now
 
-// GenerateEmailVerificationToken returns a secure random token and its expiry time.
 func GenerateEmailVerificationToken() (token string, expiresAt time.Time, err error) {
 	b := make([]byte, VerificationTokenBytes)
 	if _, err = rand.Read(b); err != nil {
@@ -62,7 +60,6 @@ func GenerateMFAToken(email string, userID int64) (string, error) {
 }
 
 func VerifyMFAToken(mfaToken string) (string, error) {
-	// Step 1. Parse and verify the MFA token
 	parsedToken, err := jwt.Parse(mfaToken, func(token *jwt.Token) (interface{}, error) {
 		return []byte(env.GetString("MFA_JWT_SECRET", "TOKEN")), nil
 	})
@@ -81,7 +78,6 @@ func VerifyMFAToken(mfaToken string) (string, error) {
 		return "", fmt.Errorf("invalid user ID in token")
 	}
 
-	// convert userIdFloat to string
 	userId := strconv.FormatFloat(userIdFloat, 'f', 0, 64)
 
 	return userId, nil

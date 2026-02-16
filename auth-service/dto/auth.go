@@ -5,7 +5,6 @@ type LoginUserRequestDTO struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-// SignupRequestDTO is the request body for user signup (name, email, password).
 type SignupRequestDTO struct {
 	Name     string `json:"name" validate:"required,min=1,max=255"`
 	Email    string `json:"email" validate:"required,email"`

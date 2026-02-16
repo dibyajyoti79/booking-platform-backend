@@ -14,16 +14,14 @@ import (
 	"time"
 )
 
-// Config holds the configuration for the server.
 type Config struct {
-	Addr string // PORT
+	Addr string
 }
 
 type Application struct {
 	Config Config
 }
 
-// Constructor for Config
 func NewConfig() Config {
 
 	port := env.GetString("PORT", ":8080")
@@ -33,7 +31,6 @@ func NewConfig() Config {
 	}
 }
 
-// Constructor for Application
 func NewApplication(cfg Config) *Application {
 	return &Application{
 		Config: cfg,
@@ -53,8 +50,8 @@ func (app *Application) Run() error {
 	server := &http.Server{
 		Addr:         app.Config.Addr,
 		Handler:      router.SetupRouter(userRouter, jwtAuth),
-		ReadTimeout:  10 * time.Second, // Set read timeout to 10 seconds
-		WriteTimeout: 10 * time.Second, // Set write timeout to 10 seconds
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	fmt.Println("Starting server on", app.Config.Addr)

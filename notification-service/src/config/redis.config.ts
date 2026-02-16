@@ -1,7 +1,6 @@
 import Redis from "ioredis";
 import { serverConfig } from ".";
 
-// Singleton pattern to connect to Redis
 function connectToRedis() {
   try {
     let connection: Redis;
@@ -9,7 +8,7 @@ function connectToRedis() {
     const redisConfig = {
       port: serverConfig.REDIS_PORT,
       host: serverConfig.REDIS_HOST,
-      maxRetriesPerRequest: null, // Disable automatic reconnection
+      maxRetriesPerRequest: null,
     };
 
     return () => {

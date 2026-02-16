@@ -13,7 +13,6 @@ import (
 	"AuthService/utils"
 )
 
-// Sentinel errors for signup/verification flow.
 var (
 	ErrEmailAlreadyRegistered   = errors.New("email already registered")
 	ErrInvalidVerificationToken = errors.New("invalid or expired verification token")
@@ -55,8 +54,6 @@ func (u *UserServiceImpl) GetUserById(id string) (*models.User, error) {
 	return user, nil
 }
 
-// Signup registers a new user (or resends verification for existing unverified user) and queues verification email.
-// Edge cases: already verified -> ErrEmailAlreadyRegistered; unverified same email -> refresh token and resend.
 func (u *UserServiceImpl) Signup(ctx context.Context, payload *dto.SignupRequestDTO) error {
 	hashedPassword, err := utils.HashPassword(payload.Password)
 	if err != nil {
@@ -72,7 +69,6 @@ func (u *UserServiceImpl) Signup(ctx context.Context, payload *dto.SignupRequest
 		if existing.EmailVerified {
 			return ErrEmailAlreadyRegistered
 		}
-		// Unverified: update token and password, resend email (user may have tried again after days).
 		token, expiresAt, err := utils.GenerateEmailVerificationToken()
 		if err != nil {
 			return fmt.Errorf("generate verification token: %w", err)
@@ -119,7 +115,6 @@ func (u *UserServiceImpl) sendVerificationEmail(ctx context.Context, email, name
 	return nil
 }
 
-// VerifyEmail marks the user as verified when they click the link. Returns error if token invalid or expired.
 func (u *UserServiceImpl) VerifyEmail(token string) error {
 	if token == "" {
 		return ErrInvalidVerificationToken
@@ -132,7 +127,7 @@ func (u *UserServiceImpl) VerifyEmail(token string) error {
 		return fmt.Errorf("get by verification token: %w", err)
 	}
 	if user.EmailVerified {
-		return nil // idempotent: already verified
+		return nil
 	}
 	if user.EmailVerificationTokenExpiresAt != nil {
 		if t := *user.EmailVerificationTokenExpiresAt; t.Before(utils.VerificationTokenNow()) {
@@ -178,7 +173,6 @@ func (u *UserServiceImpl) LoginUser(payload *dto.LoginUserRequestDTO) (*dto.Logi
 	}, nil
 }
 
-// BecomeHost upgrades the current user from guest to host. Idempotent if already host.
 func (u *UserServiceImpl) BecomeHost(userID string) (*models.User, error) {
 	user, err := u.userRepository.GetByID(userID)
 	if err != nil {

@@ -1,11 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { UnauthorizedError } from "../utils/api-error";
 
-/**
- * Reads user identity from headers set by the API gateway (auth-service proxy).
- * Same header names as in auth-service/utils/proxy.go: X-User-ID, X-User-Email, X-User-Role.
- * Attaches req.user. If X-User-ID is missing, responds 401 Unauthorized.
- */
 export function attachUserFromHeaders(
   req: Request,
   res: Response,

@@ -4,9 +4,21 @@ import { ApiResponse } from "../utils/api-response";
 import { BookingService } from "../services/booking.service";
 import { BookingRepository } from "../repositories/booking.repository";
 import { getQuote } from "../clients/hotel.client";
+import { sendNotification } from "../clients/notification.client";
 import { BadRequestError } from "../utils/api-error";
+import logger from "../config/logger.config";
 
 const bookingService = new BookingService(new BookingRepository());
+
+const RESERVATION_CONFIRMATION_TEMPLATE_ID = "reservation-confirmation";
+
+function formatDate(d: Date): string {
+  return new Date(d).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export async function createReservation(req: Request, res: Response) {
   const user = req.user;
@@ -54,6 +66,30 @@ export async function confirmReservation(req: Request, res: Response) {
   const booking = await bookingService.finalizeBooking(
     req.params.idempotencyKey
   );
+
+  const userEmail = req.user?.email;
+  if (userEmail) {
+    try {
+      await sendNotification({
+        to: userEmail,
+        subject: "Reservation confirmed",
+        templateId: RESERVATION_CONFIRMATION_TEMPLATE_ID,
+        params: {
+          reservationId: booking.id,
+          checkIn: formatDate(booking.checkIn),
+          checkOut: formatDate(booking.checkOut),
+          totalAmount: String(booking.totalAmount),
+        },
+      });
+    } catch (err) {
+      logger.warn("Failed to send reservation confirmation email", {
+        reservationId: booking.id,
+        to: userEmail,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   res
     .status(StatusCodes.OK)
     .json(new ApiResponse("Reservation confirmed successfully", booking));

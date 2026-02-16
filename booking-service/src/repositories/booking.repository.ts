@@ -12,7 +12,6 @@ export interface IBookingRepository {
     tx: Prisma.TransactionClient,
     reservationId: number
   ): Promise<Reservation>;
-  cancelBooking(id: number): Promise<Reservation>;
   createIdempotencyKey(key: string, reservationId: number): Promise<IdempotencyKey>;
   getIdempotencyKeyWithLock(
     tx: Prisma.TransactionClient,
@@ -55,13 +54,6 @@ export class BookingRepository implements IBookingRepository {
     return tx.reservation.update({
       where: { id: reservationId },
       data: { status: "CONFIRMED" },
-    });
-  }
-
-  async cancelBooking(id: number): Promise<Reservation> {
-    return prisma.reservation.update({
-      where: { id },
-      data: { status: "CANCELLED" },
     });
   }
 

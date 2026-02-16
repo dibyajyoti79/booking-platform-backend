@@ -1,4 +1,6 @@
 import { z } from "zod";
-import { createBookingSchema } from "../validators/booking.validator";
+import { createReservationSchema } from "../validators/reservation.validator";
 
-export type CreateBookingDto = z.infer<typeof createBookingSchema>;
+export type CreateBookingDto = z.infer<typeof createReservationSchema> & {
+  userId: number;
+};

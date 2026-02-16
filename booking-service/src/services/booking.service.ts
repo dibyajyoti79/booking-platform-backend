@@ -1,6 +1,6 @@
-import { Booking } from "../prisma/generated/client";
+import type { Reservation } from "../prisma/generated/client";
 import { IBookingRepository } from "../repositories/booking.repository";
-import { CreateBookingDto } from "../dtos/booking.dto";
+import type { CreateBookingDto } from "../dtos/booking.dto";
 import {
   BadRequestError,
   InternalServerError,
@@ -14,9 +14,10 @@ import { redlock } from "../config/redis.config";
 export interface IBookingService {
   createBooking(
     input: CreateBookingDto,
+    amount: number
   ): Promise<{ bookingId: number; idempotencyKey: string }>;
-  finalizeBooking(idempotencyKey: string): Promise<Booking>;
-  getBookingById(id: number): Promise<Booking>;
+  finalizeBooking(idempotencyKey: string): Promise<Reservation>;
+  getBookingById(id: number): Promise<Reservation>;
 }
 
 export class BookingService implements IBookingService {
@@ -25,21 +26,21 @@ export class BookingService implements IBookingService {
   }
   async createBooking(
     data: CreateBookingDto,
+    amount: number
   ): Promise<{ bookingId: number; idempotencyKey: string }> {
     const ttl = serverConfig.LOCK_TTL;
-    const bookingResource = `hotel:${data.hotelId}`;
+    const bookingResource = `hotel:${data.hotelId}:roomType:${data.roomTypeId}`;
 
     try {
       await redlock.acquire([bookingResource], ttl);
-      const amount = 100;
-      const booking = await this.bookingRepository.create(data, amount);
+      const reservation = await this.bookingRepository.create(data, amount);
       const idempotencyKey = generateIdempotencyKey();
       await this.bookingRepository.createIdempotencyKey(
         idempotencyKey,
-        booking.id,
+        reservation.id,
       );
       return {
-        bookingId: booking.id,
+        bookingId: reservation.id,
         idempotencyKey,
       };
     } catch (error) {
@@ -48,7 +49,7 @@ export class BookingService implements IBookingService {
       );
     }
   }
-  async finalizeBooking(idempotencyKey: string): Promise<Booking> {
+  async finalizeBooking(idempotencyKey: string): Promise<Reservation> {
     return await prisma.$transaction(async (tx) => {
       const idempotencyKeyData =
         await this.bookingRepository.getIdempotencyKeyWithLock(
@@ -56,7 +57,7 @@ export class BookingService implements IBookingService {
           idempotencyKey,
         );
 
-      if (!idempotencyKeyData || !idempotencyKeyData.bookingId) {
+      if (!idempotencyKeyData?.reservationId) {
         throw new NotFoundError("Idempotency key not found");
       }
 
@@ -64,20 +65,20 @@ export class BookingService implements IBookingService {
         throw new BadRequestError("Idempotency key already finalized");
       }
 
-      const booking = await this.bookingRepository.confirmBooking(
+      const reservation = await this.bookingRepository.confirmBooking(
         tx,
-        idempotencyKeyData.bookingId,
+        idempotencyKeyData.reservationId,
       );
       await this.bookingRepository.finalizeIdempotencyKey(tx, idempotencyKey);
 
-      return booking;
+      return reservation;
     });
   }
-  async getBookingById(id: number): Promise<Booking> {
-    const booking = await this.bookingRepository.getBookingById(id);
-    if (!booking) {
-      throw new NotFoundError("Booking not found");
+  async getBookingById(id: number): Promise<Reservation> {
+    const reservation = await this.bookingRepository.getBookingById(id);
+    if (!reservation) {
+      throw new NotFoundError("Reservation not found");
     }
-    return booking;
+    return reservation;
   }
 }

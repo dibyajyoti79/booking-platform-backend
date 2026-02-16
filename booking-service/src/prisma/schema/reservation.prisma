@@ -1,0 +1,31 @@
+// Reservation: created via API after hotel-service availability/quote check
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Reservation {
+  id             Int                @id @default(autoincrement())
+  userId         Int
+  hotelId        Int
+  roomTypeId     Int
+  checkIn        DateTime
+  checkOut       DateTime
+  quantity       Int                 // number of rooms
+  totalAmount    Decimal             @db.Decimal(10, 2)
+  status         ReservationStatus   @default(PENDING)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  idempotencyKey IdempotencyKey?
+}
+
+model IdempotencyKey {
+  id            Int          @id @default(autoincrement())
+  idemKey       String       @unique
+  reservationId Int?         @unique
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  finalized     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}

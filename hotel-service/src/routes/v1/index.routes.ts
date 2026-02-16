@@ -4,6 +4,7 @@ import hotelRouter from "./hotel.routes";
 import roomTypeRouter from "./roomType.routes";
 import inventoryRouter from "./inventory.routes";
 import rateRouter from "./rate.routes";
+import availabilityRouter from "./availability.routes";
 
 const v1Router = express.Router();
 
@@ -12,5 +13,6 @@ v1Router.use("/hotels", hotelRouter);
 v1Router.use("/room-types", roomTypeRouter);
 v1Router.use("/inventories", inventoryRouter);
 v1Router.use("/rates", rateRouter);
+v1Router.use("/availability", availabilityRouter);
 
 export default v1Router;

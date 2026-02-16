@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { AnyZodObject } from "zod";
+import { AnyZodObject, ZodTypeAny } from "zod";
 import logger from "../config/logger.config";
 
-export const validateRequestBody = (schema: AnyZodObject) => {
+export const validateRequestBody = (schema: AnyZodObject | ZodTypeAny) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       logger.info("Validating request body");

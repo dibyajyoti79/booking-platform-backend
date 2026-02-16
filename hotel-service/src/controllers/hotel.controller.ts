@@ -3,9 +3,12 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../utils/api-response";
 import { HotelService } from "../services/hotel.service";
 import { HotelRepository } from "../repositories/hotel.repository";
-import { BadRequestError } from "../utils/api-error";
+import { getElasticsearchClient } from "../elasticsearch/client";
+import { hotelSearchIndex } from "../elasticsearch/hotel-index";
+import { BadRequestError, ServiceUnavailableError } from "../utils/api-error";
 
-const hotelService = new HotelService(new HotelRepository());
+const searchIndex = getElasticsearchClient() ? hotelSearchIndex : undefined;
+const hotelService = new HotelService(new HotelRepository(), searchIndex);
 
 export async function createHotel(
   req: Request,
@@ -35,7 +38,17 @@ export async function getHotelById(
 }
 
 export async function getHotels(req: Request, res: Response): Promise<void> {
-  const hotels = await hotelService.getAll();
+  const q = req.query.q;
+  const searchQuery =
+    typeof q === "string" && q.trim().length > 0 ? q.trim() : null;
+  if (searchQuery && !searchIndex) {
+    throw new ServiceUnavailableError(
+      "Search is not available. Elasticsearch is not configured."
+    );
+  }
+  const hotels = searchQuery
+    ? await hotelService.search(searchQuery)
+    : await hotelService.getAll();
   res
     .status(StatusCodes.OK)
     .json(new ApiResponse("Hotels fetched successfully", hotels));

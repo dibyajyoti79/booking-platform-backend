@@ -15,3 +15,7 @@ export const hotelIdSchema = z.object({
     message: "id must be a number string",
   }),
 });
+
+export const getHotelsQuerySchema = z.object({
+  q: z.string().trim().max(200).optional(),
+});

@@ -49,6 +49,12 @@ class InternalServerError extends ApiError {
   }
 }
 
+class ServiceUnavailableError extends ApiError {
+  constructor(message = "Service Unavailable", error: unknown = null) {
+    super(StatusCodes.SERVICE_UNAVAILABLE, message, error);
+  }
+}
+
 export {
   ApiError,
   BadRequestError,
@@ -57,4 +63,5 @@ export {
   ForbiddenError,
   ConflictError,
   InternalServerError,
+  ServiceUnavailableError,
 };

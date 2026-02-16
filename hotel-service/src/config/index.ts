@@ -4,6 +4,7 @@ import logger from "./logger.config";
 type ServerConfig = {
   PORT: number;
   ENV: string;
+  ELASTICSEARCH_NODE: string;
 };
 
 type DatabaseConfig = {
@@ -31,6 +32,7 @@ loadEnv();
 export const serverConfig: ServerConfig = {
   PORT: Number(process.env.PORT) || 3001,
   ENV: process.env.NODE_ENV || "development",
+  ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE || "http://localhost:9200",
 };
 
 export const dbConfig: DatabaseConfig = {

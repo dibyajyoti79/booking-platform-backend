@@ -1,8 +1,13 @@
 import { Router } from "express";
 
 import { requireRole } from "../../middlewares/authorize.middleware";
-import { validateParams, validateRequestBody } from "../../validators/index";
 import {
+  validateParams,
+  validateQueryParams,
+  validateRequestBody,
+} from "../../validators/index";
+import {
+  getHotelsQuerySchema,
   hotelIdSchema,
   hotelSchema,
   updateHotelSchema,
@@ -21,7 +26,11 @@ const hostOnly = requireRole(["host"]);
 
 hotelRouter.post("/", hostOnly, validateRequestBody(hotelSchema), createHotel);
 hotelRouter.get("/:id", validateParams(hotelIdSchema), getHotelById);
-hotelRouter.get("/", getHotels);
+hotelRouter.get(
+  "/",
+  validateQueryParams(getHotelsQuerySchema),
+  getHotels
+);
 hotelRouter.put(
   "/:id",
   hostOnly,
